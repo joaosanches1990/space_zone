@@ -1,5 +1,11 @@
 require 'gosu'
 
+#do z order constant stuff
+module ZOrder
+  BACKGROUND, STARS, PLAYER, UI = *0..3
+end
+
+
 class Game < Gosu::Window
 
   def initialize
@@ -7,8 +13,13 @@ class Game < Gosu::Window
     self.caption = 'Space Zone'
 
     @background_image = Gosu::Image.new('media/space.png', :tileable => true)
+
     @player = Player.new
     @player.warp(400, 300)
+
+    @star_anim = Gosu::Image.load_tiles('media/star.png', 25, 25)
+    @stars = Array.new
+
   end
 
   def update
@@ -23,14 +34,28 @@ class Game < Gosu::Window
     end
 
     @player.move
+    @player.collect_stars(@stars)
 
+    if rand(100) < 4 and @stars.size < 25
+      @stars.push(Star.new(@star_anim ))
+    end
   end
 
   def draw
     @player.draw
-    @background_image.draw(0, 0, 0)
-
+    @background_image.draw(0, 0, ZOrder::BACKGROUND)
+    @stars.each { |star| star.draw}
   end
+
+  #exit the game
+  def button_down(id)
+    if id == Gosu::KB_ESCAPE
+      close
+    else
+      super
+    end
+  end
+
 
 end
 
@@ -76,6 +101,42 @@ class Player
   def draw
     @image.draw_rot(@x, @y, 1 ,@angle)
   end
+
+  def score
+    @score
+  end
+
+  def collect_stars(stars)
+    stars.reject! { |star| Gosu.distance(@x, @y, star.x, star.y) < 35}
+  end
 end
+
+
+
+
+# Add Star Animations
+
+class Star
+  attr_reader :x, :y
+
+  def initialize(animation)
+    @animation = animation
+    @color = Gosu::Color::BLACK.dup
+    @color.red = rand(256 - 40) + 40
+    @color.green = rand(256 - 40) + 40
+    @color.blue = rand(256 - 40) + 40
+    @x = rand * 640
+    @y = rand * 480
+  end
+
+  def draw
+    img = @animation[Gosu.milliseconds / 100 % @animation.size]
+    img.draw(@x - img.width / 2.0, @y - img.height / 2.0,
+        ZOrder::STARS, 1, 1, @color, :add)
+  end
+end
+
+
+
 
 Game.new.show
