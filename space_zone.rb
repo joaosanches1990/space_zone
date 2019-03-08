@@ -21,6 +21,8 @@ class Game < Gosu::Window
     @stars = Array.new
 
     @font = Gosu::Font.new(20)
+    @crazyfrog = Gosu::Song.new('media/crazyfrog.wav')
+    @crazyfrog.play(true)
   end
 
   def update
